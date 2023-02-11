@@ -29,7 +29,8 @@ def generate_frames(video_file: str) -> Generator[np.ndarray, None, None]:
 
 def live_camera(video_processor: Callable = None) -> None:
     feed = cv2.VideoCapture(0)
-
+    feed.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    feed.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     while True:
         success, frame = feed.read()
 
@@ -134,7 +135,7 @@ def pose_post_process_output(
     return output
 
 
-def process_frame_and_annotate(model: models.yolo, frame: np.ndarray) -> np.ndarray:
+def process_frame_and_annotate(model: models.yolo, frame: np.ndarray, return_output: bool = False) -> np.ndarray:
     pose_pre_processed_frame = pose_pre_process_frame(frame=frame.copy())
 
     image_size = frame.shape[:2]
@@ -152,16 +153,19 @@ def process_frame_and_annotate(model: models.yolo, frame: np.ndarray) -> np.ndar
         )
 
     annotated_frame = pose_annotate(image=frame, detections=pose_output)
+    if return_output:
+        return annotated_frame, pose_output
     return annotated_frame
 
 
 def calculate_angle(pose_out: np.ndarray, a: int, b: int, c: int, draw: bool = False,
                     frame: np.ndarray = None) -> float:
     coord = []
-    no_kpt = len(pose_out) // 3
+    kpts = pose_out[0, 7:].T
+    no_kpt = len(kpts) // 3
     for i in range(no_kpt):
-        cx_cy = pose_out[3 * i], pose_out[3 * i + 1]
-        conf = pose_out[3 * i + 2]
+        cx_cy = kpts[3 * i], kpts[3 * i + 1]
+        conf = kpts[3 * i + 2]
         coord.append([i, cx_cy, conf])
 
     a = np.array(coord[a][1])
@@ -179,6 +183,6 @@ def calculate_angle(pose_out: np.ndarray, a: int, b: int, c: int, draw: bool = F
 
     if draw and frame is not None:
         elbow = int(b[0]), int(b[1])
-        cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, 4, (225, 225, 225), 3, cv2.LINE_AA)
+        cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, 3, (225, 225, 225), 3, cv2.LINE_AA)
 
     return angle
