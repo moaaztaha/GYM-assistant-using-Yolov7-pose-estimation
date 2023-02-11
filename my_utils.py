@@ -106,12 +106,12 @@ def pose_annotate(image: np.ndarray, detections: np.ndarray) -> np.ndarray:
 
 
 def pose_post_process_output(
-    model: models.yolo,
-    output: torch.tensor,
-    confidence_threshold: float,
-    iou_threshold: float,
-    image_size: Tuple[int, int],
-    scaled_image_size: Tuple[int, int]
+        model: models.yolo,
+        output: torch.tensor,
+        confidence_threshold: float,
+        iou_threshold: float,
+        image_size: Tuple[int, int],
+        scaled_image_size: Tuple[int, int]
 ) -> np.ndarray:
     output = non_max_suppression_kpt(
         prediction=output,
@@ -153,3 +153,32 @@ def process_frame_and_annotate(model: models.yolo, frame: np.ndarray) -> np.ndar
 
     annotated_frame = pose_annotate(image=frame, detections=pose_output)
     return annotated_frame
+
+
+def calculate_angle(pose_out: np.ndarray, a: int, b: int, c: int, draw: bool = False,
+                    frame: np.ndarray = None) -> float:
+    coord = []
+    no_kpt = len(pose_out) // 3
+    for i in range(no_kpt):
+        cx_cy = pose_out[3 * i], pose_out[3 * i + 1]
+        conf = pose_out[3 * i + 2]
+        coord.append([i, cx_cy, conf])
+
+    a = np.array(coord[a][1])
+    b = np.array(coord[b][1])
+    c = np.array(coord[c][1])
+
+    ba = a - b
+    bc = c - b
+
+    cosine_angel = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    angle = np.arccos(cosine_angel)
+    angle = np.degrees(angle)
+    if angle > 180:
+        angle = 360 - angle
+
+    if draw and frame is not None:
+        elbow = int(b[0]), int(b[1])
+        cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, 4, (225, 225, 225), 3, cv2.LINE_AA)
+
+    return angle
