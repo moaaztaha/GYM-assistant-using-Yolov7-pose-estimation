@@ -44,6 +44,52 @@ def live_camera(video_processor: Callable = None) -> None:
     cv2.destroyAllWindows()
 
 
+def calculate_reps(pose_model: models.yolo.Model) -> None:
+    feed = cv2.VideoCapture(0)
+    feed.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    feed.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+    stage_left = None
+    counter_left = 0
+    stage_right = None
+    counter_right = 0
+    while True:
+        success, frame = feed.read()
+
+        frame, pose_output = process_frame_and_annotate(pose_model, frame, True)
+        angle_left = calculate_angle(pose_output, *[6, 8, 10], True, frame)
+        angle_right = calculate_angle(pose_output, *[5, 7, 9], True, frame)
+
+        if angle_left > 150:
+            stage_left = 'down'
+        if angle_left < 30 and stage_left == 'down':
+            stage_left = 'up'
+            counter_left += 1
+
+        if angle_right > 150:
+            stage_right = 'down'
+        if angle_right < 30 and stage_right == 'down':
+            stage_right = 'up'
+            counter_right += 1
+
+        # drawing stage and counter - left
+        cv2.putText(frame, f"Stage: {stage_left}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (225, 225, 225), 3, cv2.LINE_AA)
+        cv2.putText(frame, f"Reps: {str(counter_left)}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 2,
+                    (225, 225, 225), 3, cv2.LINE_AA)
+
+        # drawing stage and counter - left
+        cv2.putText(frame, f"Stage: {stage_right}", (900, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (225, 225, 225), 3, cv2.LINE_AA)
+        cv2.putText(frame, f"Reps: {str(counter_right)}", (900, 100), cv2.FONT_HERSHEY_SIMPLEX, 2,
+                    (225, 225, 225), 3, cv2.LINE_AA)
+
+        cv2.imshow('camera', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    feed.release()
+    cv2.destroyAllWindows()
+
+
 def plot_image(image: np.ndarray, size: int = 12) -> None:
     plt.figure(figsize=(size, size))
     plt.axis('off')
