@@ -4,6 +4,7 @@
 This project is about counting curls and making sure elbows are tucked in using YOLOv7 for pose estimation. We will be using OpenCV and YOLOv7 to detect the human body parts and then estimate the angle between the three points chosen.
 
 ### Demo
+<img src="demo.gif" width=480>
 
 ### Installation
 1. Clone the project repository from GitHub.
