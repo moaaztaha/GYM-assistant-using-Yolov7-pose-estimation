@@ -1,3 +1,5 @@
+import pathlib
+
 import matplotlib.pyplot as plt
 import torch
 import cv2
@@ -52,7 +54,8 @@ def live_camera(video_processor: Callable = None) -> None:
     cv2.destroyAllWindows()
 
 
-def calculate_reps(pose_model: models.yolo.Model) -> None:
+def calculate_reps(pose_model: models.yolo.Model, angle_max: int = 150, angle_min: int = 30,
+                   threshold: int = 35) -> None:
     feed = cv2.VideoCapture(0)
     if not feed.isOpened():
         print("Cannot open camera")
@@ -78,14 +81,13 @@ def calculate_reps(pose_model: models.yolo.Model) -> None:
         angle_right = calculate_angle(pose_output, *[5, 7, 9], True, frame)
 
         # arm joints
-        threshold = 35
         arm_left = calculate_angle(pose_output, *[12, 6, 8], True, frame, 2, threshold)
         arm_right = calculate_angle(pose_output, *[11, 5, 7], True, frame, 2, threshold)
 
         if arm_left < threshold:
-            if angle_left > 150:
+            if angle_left > angle_max:
                 stage_left = 'down'
-            if angle_left < 30 and stage_left == 'down':
+            if angle_left < angle_min and stage_left == 'down':
                 stage_left = 'up'
                 counter_left += 1
         else:
@@ -94,9 +96,9 @@ def calculate_reps(pose_model: models.yolo.Model) -> None:
                         cv2.LINE_AA)
 
         if arm_right < threshold:
-            if angle_right > 150:
+            if angle_right > angle_max:
                 stage_right = 'down'
-            if angle_right < 30 and stage_right == 'down':
+            if angle_right < angle_min and stage_right == 'down':
                 stage_right = 'up'
                 counter_right += 1
         else:
@@ -105,12 +107,14 @@ def calculate_reps(pose_model: models.yolo.Model) -> None:
                         cv2.LINE_AA)
 
         # drawing stage and counter - left
-        cv2.putText(frame, f"Stage: {stage_left}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (225, 225, 225), 3, cv2.LINE_AA)
+        cv2.putText(frame, f"Stage: {stage_left}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (225, 225, 225), 3,
+                    cv2.LINE_AA)
         cv2.putText(frame, f"Reps: {str(counter_left)}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 2,
                     (225, 225, 225), 3, cv2.LINE_AA)
 
         # drawing stage and counter - left
-        cv2.putText(frame, f"Stage: {stage_right}", (900, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (225, 225, 225), 3, cv2.LINE_AA)
+        cv2.putText(frame, f"Stage: {stage_right}", (900, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (225, 225, 225), 3,
+                    cv2.LINE_AA)
         cv2.putText(frame, f"Reps: {str(counter_right)}", (900, 100), cv2.FONT_HERSHEY_SIMPLEX, 2,
                     (225, 225, 225), 3, cv2.LINE_AA)
 
@@ -128,7 +132,7 @@ def plot_image(image: np.ndarray, size: int = 12) -> None:
     plt.show()
 
 
-def load_model(path: str) -> models.yolo.Model:
+def load_model(path: pathlib.Path) -> models.yolo.Model:
     weights = torch.load(path, map_location=device)
     model = weights['model'].float().eval()
     if torch.cuda.is_available():
@@ -212,7 +216,8 @@ def pose_post_process_output(
     return output
 
 
-def process_frame_and_annotate(model: models.yolo, frame: np.ndarray, return_output: bool = False) -> np.ndarray:
+def process_frame_and_annotate(model: models.yolo, frame: np.ndarray,
+                               return_output: bool = False):
     pose_pre_processed_frame = pose_pre_process_frame(frame=frame.copy())
 
     image_size = frame.shape[:2]
@@ -263,7 +268,7 @@ def calculate_angle(pose_out: np.ndarray, a: int, b: int, c: int, draw: bool = F
 
         if threshold:
             if angle > threshold:
-                cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, size*2, (0, 0, 225), 3,
+                cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, size * 2, (0, 0, 225), 3,
                             cv2.LINE_AA)
             else:
                 cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, size, (225, 225, 225), 3,
