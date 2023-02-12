@@ -72,21 +72,37 @@ def calculate_reps(pose_model: models.yolo.Model) -> None:
             print("Can't receive frame, Exiting ..")
             break
 
+        frame = cv2.flip(frame, 1)
         frame, pose_output = process_frame_and_annotate(pose_model, frame, True)
         angle_left = calculate_angle(pose_output, *[6, 8, 10], True, frame)
         angle_right = calculate_angle(pose_output, *[5, 7, 9], True, frame)
 
-        if angle_left > 150:
-            stage_left = 'down'
-        if angle_left < 30 and stage_left == 'down':
-            stage_left = 'up'
-            counter_left += 1
+        # arm joints
+        threshold = 35
+        arm_left = calculate_angle(pose_output, *[12, 6, 8], True, frame, 2, threshold)
+        arm_right = calculate_angle(pose_output, *[11, 5, 7], True, frame, 2, threshold)
 
-        if angle_right > 150:
-            stage_right = 'down'
-        if angle_right < 30 and stage_right == 'down':
-            stage_right = 'up'
-            counter_right += 1
+        if arm_left < threshold:
+            if angle_left > 150:
+                stage_left = 'down'
+            if angle_left < 30 and stage_left == 'down':
+                stage_left = 'up'
+                counter_left += 1
+        else:
+            stage_left = "skip"
+            cv2.putText(frame, "Close your left should!!", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 225), 3,
+                        cv2.LINE_AA)
+
+        if arm_right < threshold:
+            if angle_right > 150:
+                stage_right = 'down'
+            if angle_right < 30 and stage_right == 'down':
+                stage_right = 'up'
+                counter_right += 1
+        else:
+            stage_right = "skip"
+            cv2.putText(frame, "Close your right should!!", (900, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 225), 3,
+                        cv2.LINE_AA)
 
         # drawing stage and counter - left
         cv2.putText(frame, f"Stage: {stage_left}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (225, 225, 225), 3, cv2.LINE_AA)
@@ -220,7 +236,7 @@ def process_frame_and_annotate(model: models.yolo, frame: np.ndarray, return_out
 
 
 def calculate_angle(pose_out: np.ndarray, a: int, b: int, c: int, draw: bool = False,
-                    frame: np.ndarray = None) -> float:
+                    frame: np.ndarray = None, size=3, threshold=None) -> float:
     coord = []
     kpts = pose_out[0, 7:].T
     no_kpt = len(kpts) // 3
@@ -244,6 +260,15 @@ def calculate_angle(pose_out: np.ndarray, a: int, b: int, c: int, draw: bool = F
 
     if draw and frame is not None:
         elbow = int(b[0]), int(b[1])
-        cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, 3, (225, 225, 225), 3, cv2.LINE_AA)
+
+        if threshold:
+            if angle > threshold:
+                cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, size*2, (0, 0, 225), 3,
+                            cv2.LINE_AA)
+            else:
+                cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, size, (225, 225, 225), 3,
+                            cv2.LINE_AA)
+        else:
+            cv2.putText(frame, str(int(angle)), elbow, cv2.FONT_HERSHEY_SIMPLEX, size, (225, 225, 225), 3, cv2.LINE_AA)
 
     return angle

@@ -5,6 +5,4 @@ pose_model = load_model(POSE_MODEL_WEIGHTS_PATH)
 
 print(f"Loaded model {POSE_MODEL_WEIGHTS_PATH}")
 
-
-
 calculate_reps(pose_model)
