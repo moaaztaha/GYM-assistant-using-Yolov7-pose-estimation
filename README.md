@@ -3,10 +3,10 @@
 
 This project is about counting curls and making sure elbows are tucked in using YOLOv7 for pose estimation. I'm using OpenCV and YOLOv7 to detect the human body parts and then estimate the angle between each three points using the dot product.
 #### Angles Tracked
-| Angles| Points                              |
-|-------|-------------------------------------|
-| Left:<br/>arm: [6, 8, 10]<br/>elbow: [12, 6, 8] | <img src="keypoints.png" width=120> |
-| Right:<br/>arm: [5, 7, 9]<br/>elbow: [11, 5, 7]| ^                                   |
+| Angles                                          | Points                          |
+|-------------------------------------------------|---------------------------------|
+| Left:<br/>arm: [6, 8, 10]<br/>elbow: [12, 6, 8] | <img src="left.png" width=120>  |
+| Right:<br/>arm: [5, 7, 9]<br/>elbow: [11, 5, 7] | <img src="right.png" width=120> |                                 |
 
 ### Demo
 <img src="demo.gif" width=480>
