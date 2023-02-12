@@ -5,7 +5,7 @@ from my_utils import load_model, calculate_reps
 
 parser = argparse.ArgumentParser(
     prog="GYM Helper",
-    description="Counting curls and making sure blows are tucked in.",
+    description="Counting curls and making sure elbows are tucked in.",
     epilog="Thanks for using my app.")
 
 general_args = parser.add_argument_group("general")

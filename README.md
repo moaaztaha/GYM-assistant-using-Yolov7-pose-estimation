@@ -5,7 +5,6 @@ This project is about counting curls and making sure elbows are tucked in using 
 
 ### Demo
 
-
 ### Installation
 1. Clone the project repository from GitHub.
 2. Install the necessary packages in `requirements.txt`.
@@ -15,7 +14,30 @@ cd  GYM-assistant-using-Yolov7-pose-estimation
 pip install -r requirements.txt
 ```
 ### Usage
+```bash
+python gym_helper.py -h
+usage: GYM Helper [-h] [-mp MODEL_PATH] [-min ANGLE_MAX] [-max ANGLE_MIN] [-thr THRESHOLD]
 
+Counting curls and making sure elbows are tucked in.
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+general:
+  -mp MODEL_PATH, --model_path MODEL_PATH
+                        path to model .pt file
+
+finetune:
+  -min ANGLE_MAX, --angle_max ANGLE_MAX
+                        angel at which a curl is completed
+  -max ANGLE_MIN, --angle_min ANGLE_MIN
+                        angel at which a curl is started
+  -thr THRESHOLD, --threshold THRESHOLD
+                        the maximum for elbow angle from body
+
+Thanks for using my app.
+
+```
 
 ### References
 
