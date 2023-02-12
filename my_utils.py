@@ -28,24 +28,36 @@ def generate_frames(video_file: str) -> Generator[np.ndarray, None, None]:
 
 
 def live_camera(video_processor: Callable = None) -> None:
-    feed = cv2.VideoCapture(0)
-    feed.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    feed.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap = cv2.VideoCapture(0)
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
     while True:
-        success, frame = feed.read()
-
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        # if frame is read correctly ret is True
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
         if video_processor:
             frame = video_processor(frame)
         cv2.imshow('camera', frame)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break
-    feed.release()
+    # When everything done, release the capture
+    cap.release()
     cv2.destroyAllWindows()
 
 
 def calculate_reps(pose_model: models.yolo.Model) -> None:
     feed = cv2.VideoCapture(0)
+    if not feed.isOpened():
+        print("Cannot open camera")
+        exit()
+
     feed.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     feed.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
@@ -55,6 +67,10 @@ def calculate_reps(pose_model: models.yolo.Model) -> None:
     counter_right = 0
     while True:
         success, frame = feed.read()
+
+        if not success:
+            print("Can't receive frame, Exiting ..")
+            break
 
         frame, pose_output = process_frame_and_annotate(pose_model, frame, True)
         angle_left = calculate_angle(pose_output, *[6, 8, 10], True, frame)
@@ -83,8 +99,7 @@ def calculate_reps(pose_model: models.yolo.Model) -> None:
                     (225, 225, 225), 3, cv2.LINE_AA)
 
         cv2.imshow('camera', frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break
     feed.release()
     cv2.destroyAllWindows()
